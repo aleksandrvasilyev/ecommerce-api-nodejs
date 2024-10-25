@@ -1,0 +1,22 @@
+{
+  "name": "nodejs-online-shop",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --watch --env-file=.env server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db": "node --env-file=.env service/db/fillDb.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "email-validator": "^2.0.4",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.3"
+  }
+}
