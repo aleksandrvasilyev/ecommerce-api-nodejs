@@ -5,7 +5,6 @@ import productRouter from "./routes/product.js";
 import pageRouter from "./routes/page.js";
 import userRouter from "./routes/user.js";
 import orderRouter from "./routes/order.js";
-import searchRouter from "./routes/search.js";
 
 const app = express();
 
@@ -16,7 +15,6 @@ app.use("/products", productRouter);
 app.use("/pages", pageRouter);
 app.use("/users", userRouter);
 app.use("/orders", orderRouter);
-app.use("/search", searchRouter);
 app.use("/", authRouter);
 
 app.use((req, res) => {
