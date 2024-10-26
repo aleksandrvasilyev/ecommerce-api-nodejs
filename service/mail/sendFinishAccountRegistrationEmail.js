@@ -1,11 +1,17 @@
 import sendEmail from "./sendEmail.js";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const sendFinishAccountRegistrationEmail = (sendEmailTo, token) => {
   const subject = "Complete account registration";
 
   let htmlTemplate = fs.readFileSync(
-    `${import.meta.dirname}/template/finishAccountRegistration.html`,
+    // `${path.join(__dirname, "/template/finishAccountRegistration.html")}`,
+    `${__dirname}/template/finishAccountRegistration.html`,
     "utf-8"
   );
 

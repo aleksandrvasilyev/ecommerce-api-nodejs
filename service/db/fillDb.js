@@ -3,6 +3,11 @@ import mysql from "mysql2/promise";
 import pool from "./connection.js";
 import bcrypt from "bcrypt";
 import db from "./config.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DB_NAME = process.env.DB_DATABASE;
 
@@ -22,7 +27,7 @@ const createDatabase = `
   CREATE DATABASE ${DB_NAME};
   USE ${DB_NAME};`;
 
-const fillDatabase = fs.readFileSync(`${import.meta.dirname}/db.sql`, "utf8");
+const fillDatabase = fs.readFileSync(path.join(__dirname, "db.sql"), "utf8");
 
 const fillDb = async () => {
   try {
