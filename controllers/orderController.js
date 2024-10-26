@@ -2,26 +2,60 @@ import pool from "../service/db/connection.js";
 import db from "../service/db/config.js";
 import validator from "email-validator";
 import bcrypt from "bcrypt";
+import sendOrderConfirmationEmail from "../service/mail/sendOrderConfirmationEmail.js";
+import sendFinishAccountRegistrationEmail from "../service/mail/sendFinishAccountRegistrationEmail.js";
 
 export const storeOrder = async (req, res) => {
   try {
-    // get user
-    const user = req.user;
+    // get user and data from req body
+    const authorizedUser = req.user;
+    const { user, address, products } = req.body;
+    const order = {};
 
-    // get order data from req body
-    const { products } = req.body;
+    if (!authorizedUser) {
+      // unauthorized
 
-    // check if products exist
+      // find user by email in db
+      const findUserByEmail = await pool.query(
+        `SELECT * FROM ${db.usersTable} WHERE email = ?`,
+        [user.email]
+      );
+
+      // if user does not exist
+      if (findUserByEmail[0].length === 0) {
+        // hash random password
+        const hashedPassword = await bcrypt.hash(
+          Math.random().toString(36).slice(2, 7),
+          12
+        );
+
+        // save user to database
+        const [createdUser] = await pool.query(
+          `INSERT INTO ${db.usersTable} (email, password, is_temp_password, role, registered) VALUES (?, ?, ?, ?, ?);`,
+          [user.email, hashedPassword, 1, "user", 0]
+        );
+
+        const [newUser] = await pool.query(
+          `SELECT * FROM ${db.usersTable} WHERE id = ?;`,
+          [createdUser.insertId]
+        );
+        order.user = newUser[0];
+        order.newUser = true;
+      } else {
+        order.user = findUserByEmail[0][0];
+      }
+    } else {
+      order.user = authorizedUser;
+    }
+
+    // check if products in req body exist
     if (!products) {
-      return res
-        .status(400)
-        .send({ error: "Error with getting products from request body!" });
+      return res.status(400).send({ error: "Products are required!" });
     }
 
     // validate order information
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
-
       // check if product id is a positive number
       if (
         typeof product.product_id !== "number" ||
@@ -42,7 +76,7 @@ export const storeOrder = async (req, res) => {
           .send({ error: "Product quantity must be a positive integer!" });
       }
 
-      // check if product with current id exists
+      // check if product with current id exists in db
       const getProduct = await pool.query(
         `SELECT * FROM ${db.productsTable} WHERE id = ?`,
         [product.product_id]
@@ -51,16 +85,16 @@ export const storeOrder = async (req, res) => {
       if (getProduct[0].length === 0) {
         return res
           .status(400)
-          .send({ error: "Product with this id not found!" });
+          .send({ error: `Product with id  ${product_id} not found!` });
       }
 
-      // console.log(getProduct[0]);
+      // TODO check if product quantity is available
     }
 
     // add new order to the database
     const [newOrder] = await pool.query(
-      `INSERT INTO ${db.ordersTable} (user_id, date, status) VALUES (?, NOW(), ?);`,
-      [user.id, "new"]
+      `INSERT INTO ${db.ordersTable} (user_id, address, date, status) VALUES (?, ?, NOW(), ?);`,
+      [order.user.id, address, "new"]
     );
 
     // throw error if order was not inserted to database
@@ -70,9 +104,10 @@ export const storeOrder = async (req, res) => {
         .send({ error: "Error when inserting order to database" });
     }
 
+    // add new data to association table
     let orderInfo = [];
     let getOrderProductRow;
-    // add new data to association table
+
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
 
@@ -102,8 +137,21 @@ export const storeOrder = async (req, res) => {
       [newOrder.insertId]
     );
 
+    if (order.newUser) {
+      // TODO send email to finish account registration and create a password
+      // TODO generate jwt token
+      sendFinishAccountRegistrationEmail(order.user.email, "token");
+    }
+
+    // TODO send email with order confirmation
+    sendOrderConfirmationEmail(order.user.email, getOrderProductRow);
+
     // return success response with new order
-    res.send({ order: createdOrder[0], products: getOrderProductRow });
+    res.send({
+      user: order.user,
+      order: createdOrder[0],
+      products: getOrderProductRow,
+    });
   } catch (error) {
     console.error("Create new order error:", error);
     res.status(500).send({

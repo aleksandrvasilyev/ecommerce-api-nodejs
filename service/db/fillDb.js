@@ -32,7 +32,7 @@ const fillDb = async () => {
     const hashedPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD, 12);
 
     await makeQuery(
-      `INSERT INTO ${db.usersTable} VALUES (1, '${process.env.ADMIN_EMAIL}', '${hashedPassword}', 'admin');`
+      `INSERT INTO ${db.usersTable} (id, email, password, role) VALUES (1, '${process.env.ADMIN_EMAIL}', '${hashedPassword}', 'admin');`
     );
 
     console.log("All operations completed successfully");

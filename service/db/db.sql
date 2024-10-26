@@ -6,7 +6,7 @@
 DROP TABLE IF EXISTS categories;
 
 CREATE TABLE IF NOT EXISTS `categories` (
-  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
 );
@@ -17,27 +17,29 @@ INSERT INTO `categories` VALUES (1, 'Category 1'), (2, 'Category 2'), (3, 'Categ
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE IF NOT EXISTS `users` (
-	`id` INT(11) NOT NULL UNIQUE AUTO_INCREMENT,
-	`email` varchar(255) NOT NULL UNIQUE,
-	`password` varchar(255) NOT NULL,
-	`role` varchar(50) DEFAULT 'user' NOT NULL CHECK (role IN ('user', 'admin')),
+	`id` INT NOT NULL UNIQUE AUTO_INCREMENT,
+	`email` VARCHAR(255) NOT NULL UNIQUE,
+	`password` VARCHAR(255) NOT NULL,
+	`is_temp_password` TINYINT(1) DEFAULT 0,
+	`role` VARCHAR(50) DEFAULT 'user' NOT NULL CHECK (role IN ('user', 'admin')),
+	`registered` TINYINT(1) DEFAULT 1,
 	PRIMARY KEY (`id`)
 );
 
 -- INSERT INTO `users` VALUES (1, 'admin@website.com', '$2a$12$jllNkYA1YPVxdM8CjQmYe.s3.MT99az.W4HDrOp/X5UCcqgyQ9zXG', 'admin'); -- password123
-INSERT INTO `users` VALUES (2, 'user1@website.com', '$2a$12$q/Mw/hbAvTxXnbiyt7glXOUX.mZuKAwieVgi.EhTQhlc.G9GZF.Um', 'user'); -- password123
-INSERT INTO `users` VALUES (3, 'user2@website.com', '$2a$12$q/Mw/hbAvTxXnbiyt7glXOUX.mZuKAwieVgi.EhTQhlc.G9GZF.Um', 'user'); -- password123
+INSERT INTO `users` (`id`, `email`, `password`) VALUES (2, 'user1@website.com', '$2a$12$q/Mw/hbAvTxXnbiyt7glXOUX.mZuKAwieVgi.EhTQhlc.G9GZF.Um'); -- password123
+INSERT INTO `users` (`id`, `email`, `password`) VALUES (3, 'user2@website.com', '$2a$12$q/Mw/hbAvTxXnbiyt7glXOUX.mZuKAwieVgi.EhTQhlc.G9GZF.Um'); -- password123
 
 
 -- products
 DROP TABLE IF EXISTS products;
 
 CREATE TABLE IF NOT EXISTS `products` (
-	`id` INT(11) NOT NULL UNIQUE AUTO_INCREMENT,
+	`id` INT NOT NULL UNIQUE AUTO_INCREMENT,
 	`name` VARCHAR(255) NOT NULL DEFAULT '',
 	`description` TEXT NOT NULL,
 	`price` DECIMAL(10,0) NOT NULL,
-	`category_id` INT(11) NOT NULL,
+	`category_id` INT NOT NULL,
 	PRIMARY KEY (`id`),
 	CONSTRAINT `products_fk_category` FOREIGN KEY (`category_id`) REFERENCES `categories`(`id`)
 );
@@ -54,7 +56,7 @@ VALUES
 DROP TABLE IF EXISTS pages;
 
 CREATE TABLE IF NOT EXISTS `pages` (
-  `id` INT(11) NOT NULL UNIQUE AUTO_INCREMENT,
+  `id` INT NOT NULL UNIQUE AUTO_INCREMENT,
   `name` VARCHAR(255) NOT NULL DEFAULT '',
   `description` TEXT NOT NULL,
   PRIMARY KEY (`id`)
@@ -71,19 +73,20 @@ INSERT INTO `pages` VALUES
 DROP TABLE IF EXISTS orders;
 
 CREATE TABLE IF NOT EXISTS `orders` (
-	`id` INT(11) AUTO_INCREMENT NOT NULL UNIQUE,
-	`user_id` INT(11) NOT NULL,
+	`id` INT AUTO_INCREMENT NOT NULL UNIQUE,
+	`user_id` INT NOT NULL,
+	`address` VARCHAR(255) NOT NULL,
 	`date` datetime NOT NULL,
-	`status` varchar(255) NOT NULL,
+	`status` VARCHAR(255) NOT NULL,
 	PRIMARY KEY (`id`),
 	CONSTRAINT `orders_fk_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
 );
 
 INSERT INTO `orders` VALUES 
-(1, 2, NOW(), 'new'),
-(2, 3, NOW(), 'new'),
-(3, 2, NOW(), 'new'),
-(4, 3, NOW(), 'new');
+(1, 2, 'Prinsengracht 320, 1016 GZ Amsterdam', NOW(), 'new'),
+(2, 3, 'Prinsengracht 321, 1016 GZ Amsterdam', NOW(), 'new'),
+(3, 2, 'Prinsengracht 322, 1016 GZ Amsterdam', NOW(), 'new'),
+(4, 3, 'Prinsengracht 323, 1016 GZ Amsterdam', NOW(), 'new');
 
 
 -- order-products

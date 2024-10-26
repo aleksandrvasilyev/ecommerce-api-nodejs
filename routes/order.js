@@ -1,5 +1,5 @@
 import express from "express";
-import isAuthorized from "../middlewares/isAuthorized.js";
+import isAuthorizedOptional from "../middlewares/isAuthorizedOptional.js";
 import isAdmin from "../middlewares/isAdmin.js";
 import {
   getAllOrders,
@@ -10,7 +10,7 @@ import {
 
 const orderRouter = express.Router();
 
-orderRouter.post("/", isAuthorized, storeOrder);
+orderRouter.post("/", isAuthorizedOptional, storeOrder);
 orderRouter.get("/", isAdmin, getAllOrders);
 orderRouter.get("/:orderId", isAdmin, getOrder);
 orderRouter.put("/:orderId", isAdmin, updateOrder);
