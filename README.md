@@ -40,7 +40,6 @@ E-commerce application build on Node Js, Express, MySQL. Provides all the necess
 | **Orders** | | | |
 | `GET`    | `/orders`                      | admin         | Show all orders                                 |
 | `GET`    | `/orders/:id`                  | user, admin   | Show order information                          |
-| `POST`   | `/orders`                      | user          | Store new order for authorized user             |
-| `POST`   | `/orders/guest`                | public        | Store new order for unauthorized user           |
+| `POST`   | `/orders`                      | user          | Store new order                                 |
 | `PUT`    | `/orders/:id`                  | user, admin   | Update order information                        |
 | `PATCH`  | `/orders/:id/status`           | admin         | Update order status                             |
