@@ -1,6 +1,8 @@
 "use strict";
-const { Model } = require("sequelize");
-module.exports = (sequelize, DataTypes) => {
+
+import { Model } from "sequelize";
+
+export default (sequelize, DataTypes) => {
   class Category extends Model {
     /**
      * Helper method for defining associations.
@@ -10,13 +12,31 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
     }
+    toJSON() {
+      return { ...this.get(), id: undefined };
+    }
   }
+
   Category.init(
     {
-      name: DataTypes.STRING,
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+        validate: {
+          notEmpty: {
+            msg: "Name cannot be empty",
+          },
+        },
+      },
+      uuid: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+      },
     },
     {
       sequelize,
+      tableName: "categories",
       modelName: "Category",
     }
   );

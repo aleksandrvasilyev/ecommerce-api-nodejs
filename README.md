@@ -4,6 +4,18 @@
 
 E-commerce application build on Node Js, Express, MySQL. Provides all the necessary functionality: managing products, users, orders and carts. It includes authentication and authorization using JWT, supports secure password storage with bcrypt and easy of integration with frontend clients.
 
+## Models
+
+- Product
+- User
+- Order
+- Category
+- Page
+
+## Services
+
+- Email service
+
 ## List of endpoints
 
 | Method       | Endpoint             | Access      | Description                         |
@@ -46,6 +58,8 @@ E-commerce application build on Node Js, Express, MySQL. Provides all the necess
 
 ## Tests
 
+To run the tests:
+
 ```bash
 npm run test
 ```
@@ -85,5 +99,5 @@ npm run test
 6. Open your browser and navigate to:
 
    ```bash
-   http://localhost:3001
+   http://localhost:3000
    ```

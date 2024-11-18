@@ -1,13 +1,22 @@
-import db from "../service/db/config.js";
 import pool from "../service/db/connection.js";
+import db from "../models/index.js";
+import { validate as isUuid } from "uuid";
+
+const { Category } = db;
 
 export const getAllCategories = async (req, res) => {
   try {
-    const sql = `SELECT * FROM ${db.categoriesTable};`;
-    const [result] = await pool.query(sql);
-    res.send(result);
+    const categories = await Category.findAll();
+    res.send(categories);
   } catch (error) {
     console.error("Get all categories error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during getting all categories`,
     });
@@ -16,17 +25,32 @@ export const getAllCategories = async (req, res) => {
 
 export const getCategory = async (req, res) => {
   try {
-    const id = req.params.id;
-    const sql = `SELECT * FROM ${db.categoriesTable} WHERE id = ?;`;
-    const [result] = await pool.query(sql, [id]);
+    const uuid = req.params.uuid;
 
-    if (result.length === 0) {
-      return res.status(404).send({ error: `Category not found` });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
-    res.send(result);
+    const category = await Category.findOne({
+      where: { uuid },
+    });
+
+    if (!category) {
+      return res.status(404).send({ error: "Category not found!" });
+    }
+
+    res.send(category);
   } catch (error) {
     console.error("Get category error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during getting category`,
     });
@@ -44,7 +68,7 @@ export const createCategory = async (req, res) => {
       return res.status(400).send({ error: "Invalid category name!" });
     }
 
-    // validate category name
+    //  validate category name
     const isNameValid = name.length > 3;
     if (!isNameValid) {
       return res
@@ -52,41 +76,20 @@ export const createCategory = async (req, res) => {
         .send({ error: "Name should be at least 3 symbols!" });
     }
 
-    // check if category with the same name doesn't exist in db
-    const [existingCategory] = await pool.query(
-      `SELECT name FROM ${db.categoriesTable} WHERE name = ?;`,
-      [name]
-    );
-
-    if (existingCategory.length !== 0) {
-      return res
-        .status(400)
-        .send({ error: "Category with this name already exists!" });
-    }
-
-    // add new category to db
-    const [category] = await pool.query(
-      `INSERT INTO ${db.categoriesTable} (name) VALUES (?);`,
-      [name]
-    );
-
-    // throw error if category was not inserted to database
-    if (!category.insertId) {
-      return res
-        .status(400)
-        .send({ error: "Error when inserting object to database" });
-    }
-
-    // get object from database
-    const [createdCategory] = await pool.query(
-      `SELECT * FROM ${db.categoriesTable} WHERE id = ?;`,
-      [category.insertId]
-    );
+    // create new category
+    const newCategory = await Category.create({ name });
 
     // return success response with new category
-    res.send(createdCategory[0]);
+    res.send(newCategory);
   } catch (error) {
     console.error("Create category error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during creating new category`,
     });
@@ -99,22 +102,17 @@ export const updateCategory = async (req, res) => {
     // const user = req.user;
 
     // get category id
-    const id = req.params.id;
+    const uuid = req.params.uuid;
 
-    // check if category with this id exist
-    const [existingCategory] = await pool.query(
-      `SELECT * FROM ${db.categoriesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    if (existingCategory.length === 0) {
-      return res
-        .status(400)
-        .send({ error: "Category with this id does not exist!" });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
     // check if name exists in request body
     const { name } = req.body;
+
     if (!name) {
       return res.status(400).send({ error: "Name is required!" });
     }
@@ -126,22 +124,23 @@ export const updateCategory = async (req, res) => {
         .status(400)
         .send({ error: "Name should be at least 3 symbols!" });
     }
+    const [updated] = await Category.update({ name }, { where: { uuid } });
 
-    // update category
-    await pool.query(
-      `UPDATE ${db.categoriesTable} SET name = ? WHERE id = ?;`,
-      [name, id]
-    );
+    if (!updated) {
+      return res.status(404).send({ error: "Category not found!" });
+    }
 
-    // get updated category
-    const [updatedCategory] = await pool.query(
-      `SELECT * FROM ${db.categoriesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    res.send(updatedCategory[0]);
+    const updatedCategory = await Category.findOne({ where: { uuid } });
+    return res.send(updatedCategory);
   } catch (error) {
     console.error("Update category error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during updating category`,
     });
@@ -150,28 +149,32 @@ export const updateCategory = async (req, res) => {
 
 export const deleteCategory = async (req, res) => {
   try {
-    // get category id
-    const id = req.params.id;
+    const uuid = req.params.uuid;
 
-    // check if category with this id exists
-    const [existingCategory] = await pool.query(
-      `SELECT * FROM ${db.categoriesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    if (existingCategory.length === 0) {
-      return res
-        .status(400)
-        .send({ error: "Category with this id does not exist!" });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
-    // delete category from db
-    await pool.query(`DELETE FROM ${db.categoriesTable} WHERE id = ?;`, [id]);
+    const deleted = await Category.destroy({
+      where: { uuid },
+    });
 
-    // send success response
-    res.send({ message: "Category deleted successfully!" });
+    if (!deleted) {
+      return res.status(404).send({ error: "Category not found!" });
+    }
+
+    return res.send({ message: "Category deleted successfully" });
   } catch (error) {
     console.error("Delete category error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during deleting the category`,
     });

@@ -11,9 +11,9 @@ import isAdmin from "../middlewares/isAdmin.js";
 const categoryRouter = express.Router();
 
 categoryRouter.get("/", getAllCategories);
-categoryRouter.get("/:id", getCategory);
+categoryRouter.get("/:uuid", getCategory);
 categoryRouter.post("/", isAdmin, createCategory);
-categoryRouter.put("/:id", isAdmin, updateCategory);
-categoryRouter.delete("/:id", isAdmin, deleteCategory);
+categoryRouter.put("/:uuid", isAdmin, updateCategory);
+categoryRouter.delete("/:uuid", isAdmin, deleteCategory);
 
 export default categoryRouter;
