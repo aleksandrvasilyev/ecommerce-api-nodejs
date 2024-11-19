@@ -10,10 +10,10 @@ import {
 
 const userRouter = express.Router();
 
-userRouter.get("/:id", isAuthorized, getUser);
-userRouter.put("/:id", isAuthorized, updateUser);
-userRouter.get("/:id/orders", isAuthorized, getUserOrders);
-userRouter.get("/:id/orders/:orderId", isAuthorized, getUserOrder);
-userRouter.put("/:id/orders/:orderId", isAuthorized, updateUserOrder);
+userRouter.get("/:uuid", isAuthorized, getUser);
+userRouter.put("/:uuid", isAuthorized, updateUser);
+userRouter.get("/:uuid/orders", isAuthorized, getUserOrders);
+userRouter.get("/:uuid/orders/:orderId", isAuthorized, getUserOrder);
+userRouter.put("/:uuid/orders/:orderId", isAuthorized, updateUserOrder);
 
 export default userRouter;

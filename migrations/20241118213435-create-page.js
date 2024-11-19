@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("categories", {
+    await queryInterface.createTable("pages", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -18,7 +18,12 @@ export default {
       name: {
         type: Sequelize.STRING,
         allowNull: false,
-        unique: true,
+        unique: false,
+      },
+      body: {
+        type: Sequelize.TEXT,
+        allowNull: false,
+        unique: false,
       },
       createdAt: {
         allowNull: false,
@@ -31,6 +36,6 @@ export default {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("categories");
+    await queryInterface.dropTable("pages");
   },
 };

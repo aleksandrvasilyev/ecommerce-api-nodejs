@@ -1,9 +1,11 @@
-import pool from "../service/db/connection.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "email-validator";
-import db from "../service/db/config.js";
 
+import db from "../models/index.js";
+// import { validate as isUuid } from "uuid";
+
+const { User } = db;
 export const login = async (req, res) => {
   // check request body for email and password
   const { email, password } = req.body;
@@ -18,11 +20,9 @@ export const login = async (req, res) => {
   }
 
   // find user in the database
-  const [result] = await pool.query(
-    `SELECT * FROM ${db.usersTable} WHERE email = ?;`,
-    [email]
-  );
-  const user = result[0];
+  const user = await User.findOne({
+    where: { email },
+  });
 
   if (!user) {
     return res.status(401).send({ error: "User was not found!" });
@@ -35,7 +35,7 @@ export const login = async (req, res) => {
   }
 
   // generate JWT token
-  const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+  const token = jwt.sign({ userUUId: user.uuid }, process.env.JWT_SECRET, {
     expiresIn: "1h",
   });
 
@@ -44,48 +44,48 @@ export const login = async (req, res) => {
 };
 
 export const register = async (req, res) => {
-  // check request body for email and password
-  const { email, password } = req.body;
+  try {
+    // check request body for email and password
+    const { email, password } = req.body;
 
-  // check if email is valid
-  const isEmailValid = validator.validate(email);
-  if (!isEmailValid) {
-    return res.status(400).send({ error: "Input valid email!" });
+    // check if email is valid
+    const isEmailValid = validator.validate(email);
+    if (!isEmailValid) {
+      return res.status(400).send({ error: "Input valid email!" });
+    }
+
+    // check if password is valid
+    const isPasswordValid = password.length >= 6;
+    if (!isPasswordValid) {
+      return res
+        .status(400)
+        .send({ error: "Password should be at least 6 characters long!" });
+    }
+
+    // hash password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    // save user to database
+    const newUser = await User.create({
+      email,
+      password: hashedPassword,
+      is_temp_password: false,
+      registered: true,
+    });
+
+    // return success message to the client
+    res.status(201).send(newUser);
+  } catch (error) {
+    console.error("Create page error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
+    res.status(500).send({
+      error: `An error occurred during creating the page`,
+    });
   }
-
-  // check if password is valid
-  const isPasswordValid = password.length >= 6;
-  if (!isPasswordValid) {
-    return res
-      .status(400)
-      .send({ error: "Password should be at least 6 characters long!" });
-  }
-
-  // check if user already exists in database
-  const [user] = await pool.query(
-    `SELECT * FROM ${db.usersTable} WHERE email = ?;`,
-    [email]
-  );
-
-  if (user.length !== 0) {
-    return res
-      .status(400)
-      .send({ error: "User with this email already exist" });
-  }
-
-  // hash password
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  // save user to database
-  const [createdUser] = await pool.query(
-    `INSERT INTO ${db.usersTable} (email, password, role) VALUES (?, ?, ?);`,
-    [email, hashedPassword, "user"]
-  );
-  const [newUser] = await pool.query(
-    `SELECT * FROM ${db.usersTable} WHERE id = ?;`,
-    [createdUser.insertId]
-  );
-
-  // return success message to the client
-  res.status(201).send(newUser[0]);
 };

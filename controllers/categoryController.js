@@ -1,4 +1,3 @@
-import pool from "../service/db/connection.js";
 import db from "../models/index.js";
 import { validate as isUuid } from "uuid";
 
@@ -98,9 +97,6 @@ export const createCategory = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
   try {
-    // get admin user
-    // const user = req.user;
-
     // get category id
     const uuid = req.params.uuid;
 

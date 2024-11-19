@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-import pool from "../service/db/connection.js";
-import db from "../service/db/config.js";
+import db from "../models/index.js";
 
+const { User } = db;
 const isAuthorized = (req, res, next) => {
   // check if authorization header exists
   const authorization = req.headers.authorization;
@@ -22,14 +22,12 @@ const isAuthorized = (req, res, next) => {
     }
 
     // get userId from JWT token
-    const userId = decoded.userId;
+    const userUUId = decoded.userUUId;
 
     // find user in database
-    const [result] = await pool.query(
-      `SELECT * FROM ${db.usersTable} WHERE id = ?;`,
-      [userId]
-    );
-    const user = result[0];
+    const user = await User.findOne({
+      where: { uuid: userUUId },
+    });
 
     // throw error if user doesn't exist in database
     if (!user) {

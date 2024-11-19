@@ -1,6 +1,9 @@
 import pool from "../service/db/connection.js";
 import db from "../service/db/config.js";
+import db1 from "../models/index.js";
+import { validate as isUuid } from "uuid";
 
+const { Product } = db1;
 export const getAllProducts = async (req, res) => {
   try {
     // get all products

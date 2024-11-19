@@ -1,14 +1,22 @@
-import pool from "../service/db/connection.js";
-import db from "../service/db/config.js";
+import db from "../models/index.js";
+import { validate as isUuid } from "uuid";
+
+const { Page } = db;
 
 export const getAllPages = async (req, res) => {
   try {
-    // get all pages
-    const sql = `SELECT * FROM ${db.pagesTable};`;
-    const [result] = await pool.query(sql);
-    res.send(result);
+    const pages = await Page.findAll();
+
+    res.send(pages);
   } catch (error) {
     console.error("Get all pages error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during getting all pages`,
     });
@@ -17,22 +25,32 @@ export const getAllPages = async (req, res) => {
 
 export const getPage = async (req, res) => {
   try {
-    // get id
-    const id = req.params.id;
+    const uuid = req.params.uuid;
 
-    // find page by id
-    const sql = `SELECT * FROM ${db.pagesTable} WHERE id = ?;`;
-    const [result] = await pool.query(sql, [id]);
-
-    // throw error if page does not exist
-    if (result.length === 0) {
-      return res.status(404).send({ error: `Page not found` });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
-    // send success result
-    res.send(result);
+    const page = await Page.findOne({
+      where: { uuid },
+    });
+
+    if (!page) {
+      return res.status(404).send({ error: "Page not found!" });
+    }
+
+    res.send(page);
   } catch (error) {
     console.error("Get page error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during getting the page`,
     });
@@ -41,15 +59,12 @@ export const getPage = async (req, res) => {
 
 export const createPage = async (req, res) => {
   try {
-    // get userAdmin
-    const user = req.user;
+    // get name, body
+    const { name, body } = req.body;
 
-    // get name, description
-    const { name, description } = req.body;
-
-    // check if name, description not null
-    if (!name || !description) {
-      return res.status(400).send({ error: "Name, description are required!" });
+    // check if name, body not null
+    if (!name || !body) {
+      return res.status(400).send({ error: "Name and body are required!" });
     }
 
     // validate name
@@ -60,37 +75,27 @@ export const createPage = async (req, res) => {
         .send({ error: "Name should be at least 3 characters long!" });
     }
 
-    // validate description
-    const isDescriptionValid = name.length > 5;
-    if (!isDescriptionValid) {
+    // validate body
+    const isBodyValid = body.length > 5;
+    if (!isBodyValid) {
       return res
         .status(400)
-        .send({ error: "Description should be at least 5 characters long!" });
+        .send({ error: "Body should be at least 5 characters long!" });
     }
 
-    // add new page to the database
-    const [page] = await pool.query(
-      `INSERT INTO ${db.pagesTable} (name, description) VALUES (?, ?);`,
-      [name, description]
-    );
-
-    // throw error if page was not inserted to database
-    if (!page.insertId) {
-      return res
-        .status(400)
-        .send({ error: "Error when inserting page to database" });
-    }
-
-    // get page from database
-    const [createdPage] = await pool.query(
-      `SELECT * FROM ${db.pagesTable} WHERE id = ?;`,
-      [page.insertId]
-    );
+    const newPage = await Page.create({ name, body });
 
     // return success response with new page
-    res.send(createdPage[0]);
+    res.send(newPage);
   } catch (error) {
     console.error("Create page error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during creating the page`,
     });
@@ -99,68 +104,46 @@ export const createPage = async (req, res) => {
 
 export const updatePage = async (req, res) => {
   try {
-    // get page id
-    const id = req.params.id;
+    const uuid = req.params.uuid;
 
-    // throw error if page with this id does not exist
-    const [existingPage] = await pool.query(
-      `SELECT * FROM ${db.pagesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    if (existingPage.length === 0) {
-      return res
-        .status(400)
-        .send({ error: "Page with this id does not exist!" });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
-    // check if name, description exist in request body
-    const { name, description } = req.body;
-    if (!name || !description) {
-      return res.status(400).send({ error: "Name, description are required!" });
+    // check if name exists in request body
+    const { name, body } = req.body;
+
+    if (!name || !body) {
+      return res.status(400).send({ error: "Name and body are required!" });
     }
 
-    // validate name
+    // validate page name
     const isNameValid = name.length > 3;
     if (!isNameValid) {
       return res
         .status(400)
-        .send({ error: "Name should be at least 3 characters long!" });
+        .send({ error: "Name should be at least 3 symbols!" });
     }
 
-    // validate description
-    const isDescriptionValid = name.length > 5;
-    if (!isDescriptionValid) {
-      return res
-        .status(400)
-        .send({ error: "Description should be at least 5 characters long!" });
+    const [updated] = await Page.update({ name, body }, { where: { uuid } });
+
+    if (!updated) {
+      return res.status(404).send({ error: "Page not found!" });
     }
 
-    // update page
-    const [page] = await pool.query(
-      `UPDATE ${db.pagesTable} 
-        SET name = ?, description = ?
-        WHERE id = ?;`,
-      [name, description, id]
-    );
-
-    // throw error if page was not updated in database
-    if (page.warningStatus !== 0) {
-      return res
-        .status(400)
-        .send({ error: "Error when updating page in database" });
-    }
-
-    // get updated page
-    const [updatedPage] = await pool.query(
-      `SELECT * FROM ${db.pagesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    // send success response with updated page
-    res.send(updatedPage[0]);
+    const updatedPage = await Page.findOne({ where: { uuid } });
+    return res.send(updatedPage);
   } catch (error) {
     console.error("Update page error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during updating the page`,
     });
@@ -169,31 +152,32 @@ export const updatePage = async (req, res) => {
 
 export const deletePage = async (req, res) => {
   try {
-    // get page id
-    const id = req.params.id;
+    const uuid = req.params.uuid;
 
-    // check if page with this id exists
-    const [existingPage] = await pool.query(
-      `SELECT * FROM ${db.pagesTable} WHERE id = ?;`,
-      [id]
-    );
-
-    if (existingPage.length === 0) {
-      return res
-        .status(400)
-        .send({ error: "Page with this id does not exist!" });
+    if (!isUuid(uuid)) {
+      return res.status(400).send({
+        error: "Invalid UUID format",
+      });
     }
 
-    // delete page form db
-    const [deletePage] = await pool.query(
-      `DELETE FROM ${db.pagesTable} WHERE id = ?;`,
-      [id]
-    );
+    const deleted = await Page.destroy({
+      where: { uuid },
+    });
 
-    // send success response
-    res.send({ message: "Page deleted successfully!" });
+    if (!deleted) {
+      return res.status(404).send({ error: "Page not found!" });
+    }
+
+    return res.send({ message: "Page deleted successfully" });
   } catch (error) {
     console.error("Delete page error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
     res.status(500).send({
       error: `An error occurred during deleting the page`,
     });

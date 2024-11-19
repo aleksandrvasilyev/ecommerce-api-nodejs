@@ -1,47 +1,53 @@
 "use strict";
-
 import { Model } from "sequelize";
-
 export default (sequelize, DataTypes) => {
-  class Category extends Model {
+  class Page extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ Product }) {
+    static associate(models) {
       // define association here
-      this.hasMany(Product, { foreignKey: "category_id" });
     }
     toJSON() {
       return { ...this.get(), id: undefined };
     }
   }
-
-  Category.init(
+  Page.init(
     {
-      name: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-        validate: {
-          notEmpty: {
-            msg: "Name cannot be empty",
-          },
-        },
-      },
       uuid: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         unique: true,
       },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: false,
+        validate: {
+          notEmpty: {
+            msg: "Name cannot be empty",
+          },
+        },
+      },
+      body: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: false,
+        validate: {
+          notEmpty: {
+            msg: "Body cannot be empty",
+          },
+        },
+      },
     },
     {
       sequelize,
-      tableName: "categories",
-      modelName: "Category",
+      tableName: "pages",
+      modelName: "Page",
     }
   );
-  return Category;
+  return Page;
 };

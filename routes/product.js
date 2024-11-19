@@ -13,9 +13,9 @@ const productRouter = express.Router();
 
 productRouter.get("/", getAllProducts);
 productRouter.get("/search", search);
-productRouter.get("/:id", getProduct);
+productRouter.get("/:uuid", getProduct);
 productRouter.post("/", isAdmin, createProduct);
-productRouter.put("/:id", isAdmin, updateProduct);
-productRouter.delete("/:id", isAdmin, deleteProduct);
+productRouter.put("/:uuid", isAdmin, updateProduct);
+productRouter.delete("/:uuid", isAdmin, deleteProduct);
 
 export default productRouter;

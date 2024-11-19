@@ -11,9 +11,9 @@ import {
 const pageRouter = express.Router();
 
 pageRouter.get("/", getAllPages);
-pageRouter.get("/:id", getPage);
+pageRouter.get("/:uuid", getPage);
 pageRouter.post("/", isAdmin, createPage);
-pageRouter.put("/:id", isAdmin, updatePage);
-pageRouter.delete("/:id", isAdmin, deletePage);
+pageRouter.put("/:uuid", isAdmin, updatePage);
+pageRouter.delete("/:uuid", isAdmin, deletePage);
 
 export default pageRouter;

@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
-// import mysql from "mysql2/promise";
-import pool from "../service/db/connection.js";
-import db from "../service/db/config.js";
+import db from "../models/index.js";
+
+const { User } = db;
 
 const isAdmin = (req, res, next) => {
   // check if authorization header exists
@@ -22,23 +22,22 @@ const isAdmin = (req, res, next) => {
       return res.status(401).send({ error: "Invalid token" });
     }
 
-    // get userId from JWT token
-    const userId = decoded.userId;
+    // get userUUId from JWT token
+    const userUUId = decoded.userUUId;
 
-    // find admin user in database
-    const [result] = await pool.query(
-      `SELECT * FROM ${db.usersTable} WHERE id = ? AND email = ? AND role = ?;`,
-      [userId, process.env.ADMIN_EMAIL, "admin"]
-    );
-    const adminUser = result[0];
+    // find user in database
+    const user = await User.findOne({
+      where: { uuid: userUUId },
+    });
 
-    // throw error if user doesn't exist in database
-    if (!adminUser) {
+    // throw error if user role is not admin
+    const isUserAdmin = user.role === "admin";
+    if (!isUserAdmin) {
       return res.status(404).send({ error: "Admin user not found!" });
     }
 
     // pass user data to req.user
-    req.user = adminUser;
+    req.user = user;
 
     // go next
     next();
