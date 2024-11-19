@@ -3,21 +3,22 @@
 import { Model } from "sequelize";
 
 export default (sequelize, DataTypes) => {
-  class Product extends Model {
+  class Order extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ Category }) {
+    static associate({ User }) {
       // define association here
-      this.belongsTo(Category, { foreignKey: "category_id" });
+      this.belongsTo(User, { foreignKey: "user_id" });
     }
+
     toJSON() {
       return { ...this.get(), id: undefined };
     }
   }
-  Product.init(
+  Order.init(
     {
       uuid: {
         type: DataTypes.UUID,
@@ -25,46 +26,43 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         unique: true,
       },
-      name: {
+      user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        validate: {
+          notEmpty: {
+            msg: "User_id cannot be empty",
+          },
+        },
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
+      address: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notEmpty: {
-            msg: "Name cannot be empty",
+            msg: "Address cannot be empty",
           },
         },
       },
-      body: {
-        type: DataTypes.TEXT,
-        allowNull: true,
+      status: {
+        type: DataTypes.STRING,
+        allowNull: false,
         validate: {
           notEmpty: {
-            msg: "Body cannot be empty",
+            msg: "Status cannot be empty",
           },
-        },
-      },
-      price: {
-        type: DataTypes.DECIMAL,
-        allowNull: true,
-      },
-      stock: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      category_id: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        references: {
-          model: "categories",
-          key: "id",
         },
       },
     },
     {
       sequelize,
-      tableName: "products",
-      modelName: "Product",
+      tableName: "orders",
+      modelName: "Order",
     }
   );
-  return Product;
+  return Order;
 };

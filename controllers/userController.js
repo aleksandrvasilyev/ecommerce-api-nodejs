@@ -2,11 +2,38 @@ import pool from "../service/db/connection.js";
 import db from "../service/db/config.js";
 import validator from "email-validator";
 import bcrypt from "bcrypt";
-
-import db1 from "../models/index.js";
 import { validate as isUuid } from "uuid";
 
-const { User } = db1;
+import db1 from "../models/index.js";
+
+const { User, Order } = db1;
+
+export const getAllUsers = async (req, res) => {
+  try {
+    // get user
+    const user = req.user;
+
+    // get all users
+    const users = await User.findAll({
+      // attributes: ["uuid", "email"],
+    });
+
+    res.send(users);
+  } catch (error) {
+    console.error("Get user error:", error);
+
+    if (error.errors && error.errors[0]) {
+      return res.status(400).send({
+        error: error.errors[0].message,
+      });
+    }
+
+    res.status(500).send({
+      error: `An error occurred during getting the user`,
+    });
+  }
+};
+
 export const getUser = async (req, res) => {
   try {
     // get user
@@ -127,115 +154,40 @@ export const updateUser = async (req, res) => {
 };
 
 export const getUserOrders = async (req, res) => {
-  // get user
+  // get current authorized user
   const user = req.user;
 
-  // get id
-  const id = Number(req.params.id);
+  // extract uuid from request parameters
+  const targetUserUuid = req.params.uuid;
 
-  // check if authorized user id and params.id is equal
-  if (id !== user.id) {
-    return res.status(403).send({ error: "Access forbidden!" });
+  // validate uuid format
+  if (!isUuid(targetUserUuid)) {
+    return res.status(400).send({
+      error: "Invalid UUID format",
+    });
   }
 
-  // get current user orders from database
-  const [userOrders] = await pool.query(
-    `SELECT * FROM ${db.ordersTable} WHERE user_id = ?;`,
-    [user.id]
-  );
+  // find the target user by UUID
+  const targetUser = await User.findOne({ where: { uuid: targetUserUuid } });
+
+  if (!targetUser) {
+    return res.status(404).send({
+      error: "User not found",
+    });
+  }
+
+  // check access permissions
+  if (user.role !== "admin" && user.id !== targetUser.id) {
+    return res.status(403).send({
+      error: "Access denied",
+    });
+  }
+
+  // get orders of the target user
+  const orders = await Order.findAll({
+    where: { user_id: targetUser.id },
+  });
 
   // send success request with list of orders
-  res.send(userOrders);
-};
-
-export const getUserOrder = async (req, res) => {
-  // get user
-  const user = req.user;
-
-  // get user id from params
-  const id = Number(req.params.id);
-
-  // get order id from params
-  const orderId = Number(req.params.orderId);
-
-  // check if authorized user and params.id is equal
-  if (id !== user.id) {
-    return res.status(403).send({ error: "Access forbidden!" });
-  }
-
-  // check if order with this id exist
-  const getOrderById = await pool.query(
-    `SELECT * FROM ${db.ordersTable} WHERE id = ?`,
-    [orderId]
-  );
-  if (getOrderById[0].length === 0) {
-    return res.status(404).send({ error: "Order with this id not found!" });
-  }
-
-  // check if order id user_id is equal to user id
-  if (getOrderById[0][0].user_id !== user.id) {
-    return res.status(400).send({ error: "Access forbidden!" });
-  }
-
-  // get current order from database
-  const currentOrder = getOrderById[0][0];
-
-  // send success response with list of orders
-  res.send(currentOrder);
-};
-
-export const updateUserOrder = async (req, res) => {
-  // get user
-  const user = req.user;
-
-  // get user id from params
-  const id = Number(req.params.id);
-
-  // get order id from params
-  const orderId = Number(req.params.orderId);
-
-  // check if authorized user id and params.id is equal
-  if (id !== user.id) {
-    return res.status(403).send({ error: "Access forbidden!" });
-  }
-
-  // check if order with this id exist
-  const getOrderById = await pool.query(
-    `SELECT * FROM ${db.ordersTable} WHERE id = ?`,
-    [orderId]
-  );
-  if (getOrderById[0].length === 0) {
-    return res.status(404).send({ error: "Order with this id not found!" });
-  }
-
-  // check if order id user_id is equal to user id
-  if (getOrderById[0][0].user_id !== user.id) {
-    return res.status(400).send({ error: "Access forbidden!" });
-  }
-
-  // get data from req body
-  const { status } = req.body;
-
-  // validate data - status or other data
-  const isStatusValid = status.length > 5;
-  if (!isStatusValid) {
-    return res
-      .status(400)
-      .send({ error: "Status must be at least 5 characters long!" });
-  }
-
-  // update order in database
-  const [updatedOrder] = await pool.query(
-    `UPDATE ${db.ordersTable} SET status = ? WHERE id = ?;`,
-    [status, orderId]
-  );
-
-  // get updated order from database
-  const [result] = await pool.query(
-    `SELECT * FROM ${db.ordersTable} WHERE id = ?;`,
-    [orderId]
-  );
-
-  // send success response to user
-  res.send(result);
+  res.send(orders);
 };

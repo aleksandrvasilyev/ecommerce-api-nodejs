@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable("products", {
+    await queryInterface.createTable("orders", {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -15,29 +15,23 @@ export default {
         allowNull: false,
         unique: true,
       },
-      name: {
-        type: Sequelize.STRING,
+      user_id: {
+        type: Sequelize.INTEGER,
         allowNull: false,
-      },
-      body: {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      },
-      price: {
-        type: Sequelize.DECIMAL,
-      },
-      stock: {
-        type: Sequelize.INTEGER,
-      },
-      category_id: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
         references: {
-          model: "categories",
+          model: "users",
           key: "id",
         },
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
+      },
+      address: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      status: {
+        type: Sequelize.STRING,
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -50,6 +44,6 @@ export default {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable("products");
+    await queryInterface.dropTable("orders");
   },
 };
