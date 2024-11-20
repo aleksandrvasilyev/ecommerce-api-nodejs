@@ -20,12 +20,12 @@ const app = express();
 
 app.use(express.json());
 
-app.use("/categories", categoryRouter); // seq + pg
+app.use("/categories", categoryRouter);
 app.use("/products", productRouter);
-app.use("/pages", pageRouter); // seq + pg
+app.use("/pages", pageRouter);
 app.use("/users", userRouter);
 app.use("/orders", orderRouter);
-app.use("/", authRouter); // seq + pg
+app.use("/", authRouter);
 
 app.use((req, res) => {
   res.status(404).send("404");

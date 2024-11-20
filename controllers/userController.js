@@ -1,12 +1,9 @@
-import pool from "../service/db/connection.js";
-import db from "../service/db/config.js";
 import validator from "email-validator";
 import bcrypt from "bcrypt";
 import { validate as isUuid } from "uuid";
+import db from "../models/index.js";
 
-import db1 from "../models/index.js";
-
-const { User, Order } = db1;
+const { User, Order } = db;
 
 export const getAllUsers = async (req, res) => {
   try {

@@ -2,14 +2,14 @@
 
 import { Model } from "sequelize";
 
-module.exports = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   class ProductVariant extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate({ Product }) {
       // define association here
       this.belongsTo(Product, { foreignKey: "product_id" });
     }

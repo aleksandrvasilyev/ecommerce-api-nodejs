@@ -1,14 +1,11 @@
-import pool from "../service/db/connection.js";
-import db from "../service/db/config.js";
 import validator from "email-validator";
 import bcrypt from "bcrypt";
 import sendOrderConfirmationEmail from "../service/mail/sendOrderConfirmationEmail.js";
 import sendFinishAccountRegistrationEmail from "../service/mail/sendFinishAccountRegistrationEmail.js";
 import { validate as isUuid } from "uuid";
+import db from "../models/index.js";
 
-import db1 from "../models/index.js";
-
-const { User, Product, Order } = db1;
+const { User, Product, Order } = db;
 
 export const storeOrder = async (req, res) => {
   try {

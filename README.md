@@ -4,6 +4,10 @@
 
 E-commerce application build on Node Js, Express, MySQL. Provides all the necessary functionality: managing products, users, orders and carts. It includes authentication and authorization using JWT, supports secure password storage with bcrypt and easy of integration with frontend clients.
 
+## Entity Relationship Diagram (ERD)
+
+[Open](https://drawsql.app/teams/alex-280/diagrams/online-store-pg)
+
 ## Models
 
 - Product
@@ -11,6 +15,11 @@ E-commerce application build on Node Js, Express, MySQL. Provides all the necess
 - Order
 - Category
 - Page
+- Attribute
+- AttributeValue
+- OrderProduct
+- ProductVariant
+- VariantAttributeValue
 
 ## Services
 

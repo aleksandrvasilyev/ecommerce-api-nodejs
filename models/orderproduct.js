@@ -9,7 +9,7 @@ export default (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate({ Order, Product, ProductVariant }) {
       // define association here
       this.belongsTo(Order, { foreignKey: "order_id" });
       this.belongsTo(Product, { foreignKey: "product_id" });

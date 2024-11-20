@@ -54,5 +54,6 @@ const readFiles = async () => {
 await readFiles();
 
 db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
 export default db;
