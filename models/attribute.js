@@ -9,8 +9,12 @@ export default (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate(models) {
+    static associate({ AttributeValue }) {
       // define association here
+      this.hasMany(AttributeValue, {
+        foreignKey: "attribute_id",
+        as: "values",
+      });
     }
   }
   Attribute.init(

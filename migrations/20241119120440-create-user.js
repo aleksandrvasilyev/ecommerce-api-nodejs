@@ -24,17 +24,26 @@ export default {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      is_temp_password: {
+      isActivated: {
+        type: Sequelize.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
+      activationLink: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      isGuest: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
       role: {
-        type: Sequelize.STRING,
+        type: Sequelize.INTEGER,
         allowNull: false,
       },
-      registered: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
+      refreshToken: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

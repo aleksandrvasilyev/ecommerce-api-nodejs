@@ -8,7 +8,7 @@ const isAuthorizedOptional = async (req, res, next) => {
   if (!token) return next();
 
   try {
-    const { userUUId } = jwt.verify(token, process.env.JWT_SECRET);
+    const { userUUId } = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     req.user = await User.findOne({
       where: { uuid: userUUId },

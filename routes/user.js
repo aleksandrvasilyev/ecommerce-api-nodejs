@@ -12,7 +12,7 @@ const userRouter = express.Router();
 
 userRouter.get("/", isAdmin, getAllUsers);
 userRouter.get("/:uuid/orders", isAuthorized, getUserOrders);
-userRouter.get("/:uuid", isAuthorized, getUser);
+userRouter.get("/me", isAuthorized, getUser);
 userRouter.put("/:uuid", isAuthorized, updateUser);
 
 export default userRouter;

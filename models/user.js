@@ -45,26 +45,21 @@ export default (sequelize, DataTypes) => {
           },
         },
       },
-      is_temp_password: {
+      isActivated: {
         type: DataTypes.BOOLEAN,
+        defaultValue: false,
         allowNull: false,
         validate: {
           notEmpty: {
-            msg: "is_temp_password cannot be empty",
+            msg: "registered cannot be empty",
           },
         },
       },
-      role: {
+      activationLink: {
         type: DataTypes.STRING,
-        allowNull: false,
-        defaultValue: "user",
-        validate: {
-          notEmpty: {
-            msg: "Role cannot be empty",
-          },
-        },
+        allowNull: true,
       },
-      registered: {
+      isGuest: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         validate: {
@@ -72,6 +67,20 @@ export default (sequelize, DataTypes) => {
             msg: "registered cannot be empty",
           },
         },
+      },
+      role: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 1,
+        validate: {
+          notEmpty: {
+            msg: "Role cannot be empty",
+          },
+        },
+      },
+      refreshToken: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
     },
     {

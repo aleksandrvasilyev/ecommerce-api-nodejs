@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node --watch --env-file=.env server.js",
+    "dev": "node --watch --env-file=.env server.js",
     "test": "node --experimental-vm-modules --env-file=.env node_modules/jest/bin/jest.js --forceExit",
     "db": "node --env-file=.env service/db/fillDb.js"
   },
@@ -14,8 +14,11 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "email-validator": "^2.0.4",
     "express": "^4.21.1",
+    "express-async-errors": "^3.1.1",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.11.3",

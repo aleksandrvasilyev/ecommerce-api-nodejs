@@ -2,9 +2,11 @@ import jwt from "jsonwebtoken";
 import db from "../models/index.js";
 
 const { User } = db;
+
 const isAuthorized = (req, res, next) => {
   // check if authorization header exists
   const authorization = req.headers.authorization;
+
   if (!authorization) {
     return res.status(401).send({ error: "Authorization token is required!" });
   }
@@ -16,13 +18,12 @@ const isAuthorized = (req, res, next) => {
   }
 
   // verify JWT token
-  jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decoded) => {
     if (err) {
       return res.status(401).send({ error: "Invalid token" });
     }
-
     // get userId from JWT token
-    const userUUId = decoded.userUUId;
+    const userUUId = decoded.userUUID;
 
     // find user in database
     const user = await User.findOne({

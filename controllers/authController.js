@@ -1,91 +1,111 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "email-validator";
-
+import { createUser, loginUser } from "../services/user/userService.js";
 import db from "../models/index.js";
+import { generateAccessToken } from "../services/token/tokenService.js";
 // import { validate as isUuid } from "uuid";
 
 const { User } = db;
+
+export const register = async (req, res) => {
+  // check request body for email and password
+  const { email, password } = req.body;
+
+  const newUser = await createUser(email, password);
+
+  // return success message to the client
+  res.status(201).send(newUser);
+};
+
 export const login = async (req, res) => {
   // check request body for email and password
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(400).send({ error: "Email and password are required!" });
-  }
 
-  // check if email is valid
-  const isEmailValid = validator.validate(email);
-  if (!isEmailValid) {
-    return res.status(400).send({ error: "Input valid email!" });
-  }
+  const { accessToken, refreshToken, user } = await loginUser(email, password);
 
-  // find user in the database
-  const user = await User.findOne({
-    where: { email },
-  });
-
-  if (!user) {
-    return res.status(401).send({ error: "User was not found!" });
-  }
-
-  // check if password is correct
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-  if (!isPasswordCorrect) {
-    return res.status(401).send({ error: "Invalid credentials!" });
-  }
-
-  // generate JWT token
-  const token = jwt.sign({ userUUId: user.uuid }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    // secure: true, // for https in production
+    secure: false,
+    sameSite: "strict", // for production
+    // sameSite: "None",
   });
 
   // return the token to the client
-  res.send({ token });
+  res.send({ accessToken, user });
 };
 
-export const register = async (req, res) => {
-  try {
-    // check request body for email and password
-    const { email, password } = req.body;
+export const logout = async (req, res) => {
+  const { refreshToken } = req.cookies;
 
-    // check if email is valid
-    const isEmailValid = validator.validate(email);
-    if (!isEmailValid) {
-      return res.status(400).send({ error: "Input valid email!" });
-    }
+  if (!refreshToken) {
+    return res.status(400).send({ message: "No refresh token provided" });
+  }
 
-    // check if password is valid
-    const isPasswordValid = password.length >= 6;
-    if (!isPasswordValid) {
-      return res
-        .status(400)
-        .send({ error: "Password should be at least 6 characters long!" });
-    }
+  const user = await User.findOne({
+    where: { refreshToken: refreshToken },
+  });
+  // console.log(user);
+  const [updatedUser] = await User.update(
+    { refreshToken: "" },
+    { where: { uuid: user.uuid } }
+  );
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    // secure: true, // production
+    secure: false,
+    sameSite: "strict", // production
+    // sameSite: "None",
+  });
 
-    // save user to database
-    const newUser = await User.create({
-      email,
-      password: hashedPassword,
-      is_temp_password: false,
-      registered: true,
-    });
+  res.send({ message: "Logged out successfully" });
+};
 
-    // return success message to the client
-    res.status(201).send(newUser);
-  } catch (error) {
-    console.error("Create page error:", error);
+export const activate = async (req, res) => {};
 
-    if (error.errors && error.errors[0]) {
-      return res.status(400).send({
-        error: error.errors[0].message,
+export const refresh = async (req, res) => {
+  const { refreshToken } = req.cookies;
+
+  if (!refreshToken) {
+    return res.status(401).send({ message: "Refresh token missing" });
+  }
+
+  const user = await User.findOne({
+    where: { refreshToken: refreshToken },
+  });
+
+  if (!user) {
+    return res.status(403).send({ message: "Invalid refresh token" });
+  }
+
+  jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET,
+    async (err, userData) => {
+      if (err) {
+        await User.update({ refreshToken: "" }, { where: { refreshToken } });
+        res.clearCookie("refreshToken", {
+          httpOnly: true,
+          // secure: true, // production
+          secure: false,
+          sameSite: "strict", // production
+        });
+        return res.status(403).send({ message: "Invalid refresh token" });
+      }
+
+      const accessToken = generateAccessToken(userData.userUUID);
+
+      res.send({
+        accessToken,
+        user: {
+          uuid: user.uuid,
+          email: user.email,
+          role: user.role,
+        },
       });
     }
-
-    res.status(500).send({
-      error: `An error occurred during creating the page`,
-    });
-  }
+  );
 };
